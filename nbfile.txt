@@ -1,0 +1,28 @@
+mkdir -p ~/projects && cd projects
+
+git clone -b release https://github.com/netbox-community/netbox-docker.git
+
+cd netbox-docker
+
+sudo nano docker-compose.override.yml
+
+'''
+version: '3.4'
+services:
+  netbox:
+    ports:
+    - 8000:8080
+'''
+
+docker compose pull #version 2
+docker compose up #version 2
+
+#or do so you can keep working in the same terminal
+docker compose up -d
+
+#separate terminal
+docker compose exec netbox /opt/netbox/netbox/manage.py createsuperuser
+
+#cleanup if needed
+
+docker compose down -v
