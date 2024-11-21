@@ -44,20 +44,32 @@
                 - "8000:8080"
         mode: '0644'
 
+    - name: Test change config
+      shell:
+        cmd: "sed -i '1i version: '\''3.4'\''' docker-compose.yml"
+
+    - name: Test 2 netbox-worker
+      shell:
+        cmd: "sed -i '/netbox-worker:/,/condition: service_healthy/{s/depends_on:.*/depends_on:\n      - netbox/; /condition: service_healthy/d}' docker-compose.yml"
+
+    - name: Test 2 netbox-housekeeping
+      shell:
+        cmd: "sed -i '/netbox-housekeeping:/,/condition: service_healthy/{s/depends_on:.*/depends_on:\n      - netbox/; /condition: service_healthy/d}' docker-compose.yml"
+
     - name: Pull the latest NetBox Docker images
-      ansible.builtin.shell:
+      shell:
         cmd: "docker-compose pull"
         chdir: "~/projects/netbox-docker"
       register: pull_output
 
     - name: Bring up the NetBox Docker containers in detached mode
-      ansible.builtin.shell:
+      shell:
         cmd: "docker-compose up -d"
         chdir: "~/projects/netbox-docker"
       register: up_output
 
     - name: Create NetBox superuser
-      ansible.builtin.shell:
+      shell:
         cmd: "docker-compose exec netbox /opt/netbox/netbox/manage.py createsuperuser"
         chdir: "~/projects/netbox-docker"
       async: 600
