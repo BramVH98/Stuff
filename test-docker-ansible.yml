@@ -1,0 +1,90 @@
+- name: Setup NetBox Docker
+  hosts: all  # Adjust if you want to run on a remote server
+  become: yes
+  tasks:
+
+    - name: Install required dependencies for Docker Compose
+      ansible.builtin.package:
+        name:
+          - curl
+          - python3-pip
+          - libffi-dev
+          - gcc
+          - g++ 
+          - docker.io
+          - docker-compose
+		  - git
+        state: present
+
+    - name: Create projects directory
+      ansible.builtin.file:
+        path: "~/projects"
+        state: directory
+        mode: '0755'
+
+    - name: Clone NetBox Docker repository
+      shell:
+	    cmd: "git clone https://github.com/netbox-community/netbox-docker.git"
+
+    - name: Add docker-compose override to expose port 8000
+      ansible.builtin.copy:
+        dest: "~/projects/netbox-docker/docker-compose.override.yml"
+        content: |
+          version: '3.4'
+          services:
+            netbox:
+              ports:
+                - "8000:8080"
+        mode: '0644'
+
+    - name: Add version to the top of docker-compose.yml
+      lineinfile:
+        path: docker-compose.yml
+        line: "version: '3.4'"
+        insertafter: BOF
+
+
+    - name: Update netbox-worker block in docker-compose.yml
+      replace:
+        path: docker-compose.yml
+        regexp: |
+          netbox-worker:\s+<<: \*netbox\s+depends_on:\s+netbox:\s+condition: service_healthy
+        replace: |
+          netbox-worker:
+            <<: *netbox
+            depends_on:
+              - netbox
+
+
+    - name: Update netbox-housekeeping block in docker-compose.yml
+      replace:
+        path: docker-compose.yml
+        regexp: |
+          netbox-housekeeping:\s+<<: \*netbox\s+depends_on:\s+netbox:\s+condition: service_healthy
+        replace: |
+          netbox-housekeeping:
+            <<: *netbox
+            depends_on:
+              - netbox
+
+
+
+    - name: Pull the latest NetBox Docker images
+      shell:
+        cmd: "docker-compose pull"
+        chdir: "~/projects/netbox-docker"
+      register: pull_output
+
+    - name: Bring up the NetBox Docker containers in detached mode
+      shell:
+        cmd: "docker-compose up -d"
+        chdir: "~/projects/netbox-docker"
+      register: up_output
+
+    - name: Create NetBox superuser
+      shell:
+        cmd: "docker-compose exec netbox /opt/netbox/netbox/manage.py createsuperuser"
+        chdir: "~/projects/netbox-docker"
+      async: 600
+      poll: 0
+      ignore_errors: true
