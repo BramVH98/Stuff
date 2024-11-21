@@ -16,15 +16,9 @@
           - libffi-dev
           - gcc
           - g++ 
+          - docker.io
+          - docker-compose
         state: present
-
-    - name: Download Docker Compose binary
-      ansible.builtin.get_url:
-        url: "https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -r .tag_name)/docker-compose-$(uname -s)-$(uname -m)"
-        dest: /usr/local/bin/docker-compose
-        mode: '0755'
-      become: yes
-      when: ansible_os_family == "Debian"  # Ensure this is the right condition for your system, you can remove 'when' if unsure.
 
     - name: Create projects directory
       ansible.builtin.file:
