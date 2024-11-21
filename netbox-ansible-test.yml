@@ -1,6 +1,5 @@
----
 - name: Setup NetBox Docker
-  hosts: localhost  # Adjust if you want to run on a remote server
+  hosts: all  # Adjust if you want to run on a remote server
   become: yes
   tasks:
 
@@ -19,16 +18,13 @@
           - g++ 
         state: present
 
-    - name: Install Docker Compose
-      ansible.builtin.command:
-        cmd: curl -L https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -r .tag_name)/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
-        creates: /usr/local/bin/docker-compose
-      become: yes
-
-    - name: Set permissions for docker-compose
-      ansible.builtin.file:
-        path: /usr/local/bin/docker-compose
+    - name: Download Docker Compose binary
+      ansible.builtin.get_url:
+        url: "https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -r .tag_name)/docker-compose-$(uname -s)-$(uname -m)"
+        dest: /usr/local/bin/docker-compose
         mode: '0755'
+      become: yes
+      when: ansible_os_family == "Debian"  # Ensure this is the right condition for your system, you can remove 'when' if unsure.
 
     - name: Create projects directory
       ansible.builtin.file:
@@ -55,19 +51,19 @@
         mode: '0644'
 
     - name: Pull the latest NetBox Docker images
-      ansible.builtin.command:
+      ansible.builtin.shell:
         cmd: "docker-compose pull"
         chdir: "~/projects/netbox-docker"
       register: pull_output
 
     - name: Bring up the NetBox Docker containers in detached mode
-      ansible.builtin.command:
+      ansible.builtin.shell:
         cmd: "docker-compose up -d"
         chdir: "~/projects/netbox-docker"
       register: up_output
 
     - name: Create NetBox superuser
-      ansible.builtin.command:
+      ansible.builtin.shell:
         cmd: "docker-compose exec netbox /opt/netbox/netbox/manage.py createsuperuser"
         chdir: "~/projects/netbox-docker"
       async: 600
