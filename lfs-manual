@@ -1,0 +1,207 @@
+# XCC test box (homelab):
+-----------------------
+
+## Install docker on Windows
+
+## Create Ubuntu container
+- Open PowerShell and run
+
+```
+docker run --privileged -it ubuntu
+```
+
+## Update container
+Once inside the container we can update it to ready it
+```
+apt update
+```
+
+## Install necessary dependencies
+```
+apt install bzip2 git vim make gcc libncurses-dev flex bison bc cpio libelf-dev libssl-dev
+```
+
+## Clone linux kernel source
+```
+git clone --depth 1 https://github.com/torvalds/linux.git
+cd linux
+```
+
+## Configure kernel
+```
+make menuconfig
+```
+Just exit and save the configuration
+
+## Build the kernel
+```
+make -j$(nproc)
+```
+
+## After the build completes, we copy the kernel from arch/x86/boot/bzImage /boot-files
+```
+mkdir /boot-files
+cp arch/x86/boot/bzImage /boot-files
+```
+
+## Now to build busybox
+```
+git clone --depth 1 https://git.busybox.net/busybox
+cd busybox
+
+make menuconfig
+```
+enable Build static binary
+
+```
+make -j$(nproc)
+
+mkdir /boot-files/initramfs
+make CONFIG_PREFIX=/boot-files/initramfs install
+rm /boot-files/initramfs/linuxrc
+```
+
+## Now we'll make a simple script
+```
+cd /boot-files/initramfs
+echo -e "#!/bin/sh\nn/bin/sh" > ./initramfs
+chmod +x ./init
+```
+
+## Create initramfs
+```
+find . | cpio -o -H newc > ../init.cpio
+```
+
+## Create the boot image
+```
+dd if=/dev/zero of=./boot bs=1M count=50
+apt install dosftools
+mkfs -t fat boot
+```
+
+## Install syslinux
+```
+apt install syslinux
+
+syslinux ./boot
+```
+
+## Copy files to boot image
+```
+mkdir makemount -o loop boot make
+cp {bzImage,init.cpio} m/
+umount m
+```
+
+## Test image
+```
+apt install qemu
+
+qemu-system-x86_64 -drvie format=raw,file=./boot -display gtk
+
+/bzImage -initrd=/init.cpio
+```
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+###############################################################################################################################################################
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Here’s the complete set of instructions in one copy-paste-friendly block:
+
+```sh
+# XCC Test Box (Homelab)
+# -----------------------
+
+# Step 1: Install Docker on Windows
+# Ensure Docker is installed and running.
+
+# Step 2: Create Ubuntu Container
+docker run --privileged -it ubuntu
+
+# Step 3: Update and Install Dependencies
+apt update
+apt install bzip2 git vim make gcc libncurses-dev flex bison bc cpio libelf-dev libssl-dev parted dosfstools syslinux qemu
+
+# Step 4: Build the Kernel
+git clone --depth 1 https://github.com/torvalds/linux.git
+cd linux
+make menuconfig   # Just exit and save the default configuration
+make -j$(nproc)
+mkdir /boot-files
+cp arch/x86/boot/bzImage /boot-files/
+
+# Step 5: Build BusyBox
+git clone --depth 1 https://git.busybox.net/busybox
+cd busybox
+make menuconfig   # Enable "Build static binary (no shared libraries)" and save
+make -j$(nproc)
+mkdir /boot-files/initramfs
+make CONFIG_PREFIX=/boot-files/initramfs install
+rm /boot-files/initramfs/linuxrc
+
+# Step 6: Create the Init Script
+cd /boot-files/initramfs
+echo -e "#!/bin/sh\n/bin/sh" > ./init
+chmod +x ./init
+
+# Step 7: Create Initramfs
+find . | cpio -o -H newc > ../init.cpio
+
+# Step 8: Create the Boot Image
+dd if=/dev/zero of=./boot bs=1M count=4096
+mkfs -t fat boot
+
+# Step 9: Partition the Boot Image
+parted boot mklabel gpt
+parted boot mkpart primary fat32 1MiB 257MiB
+parted boot set 1 boot on
+parted boot mkpart primary ext4 257MiB 513MiB
+parted boot mkpart primary ext4 513MiB 769MiB
+parted boot mkpart primary ext4 769MiB 1025MiB
+parted boot mkpart primary ext4 1025MiB 4096MiB
+
+# Step 10: Associate Disk Image with a Loop Device
+losetup -fP boot
+
+# Step 11: Format Partitions
+mkfs.vfat -F32 /dev/loop0p1
+mkfs.ext4 /dev/loop0p2
+mkfs.ext4 /dev/loop0p3
+mkfs.ext4 /dev/loop0p4
+mkfs.ext4 /dev/loop0p5
+
+# Step 12: Mount and Populate Partitions
+mkdir /mnt/efi /mnt/root /mnt/rescue /mnt/xcc /mnt/misc
+mount /dev/loop0p1 /mnt/efi
+mount /dev/loop0p2 /mnt/root
+mount /dev/loop0p3 /mnt/rescue
+mount /dev/loop0p4 /mnt/xcc
+mount /dev/loop0p5 /mnt/misc
+
+# Populate EFI System Partition
+cp /path/to/syslinux/files/* /mnt/efi/
+
+# Populate Linux Root Partition
+cp /boot-files/bzImage /mnt/root/
+cp /boot-files/init.cpio /mnt/root/
+
+# (Optional) Populate Rescue Root Partition
+# Leave empty or add rescue files.
+
+# Populate XCC Application Partition
+cp -r /path/to/xcc/application/* /mnt/xcc/
+
+# Populate Misc Data Partition
+cp /path/to/logs/* /mnt/misc/
+
+# Step 13: Unmount Partitions and Detach Loop Device
+umount /mnt/efi /mnt/root /mnt/rescue /mnt/xcc /mnt/misc
+losetup -d /dev/loop0
+
+# Step 14: Test the Disk Image
+qemu-system-x86_64 -hda boot -display gtk
+
+# At the boot prompt, type:
+# /bzImage -initrd=/init.cpio
+```
