@@ -17,10 +17,8 @@
         state: present
 
     - name: Clone NetBox Docker repository
-      ansible.builtin.shell:
+      shell:
         cmd: "git clone https://github.com/netbox-community/netbox-docker.git"
-        args:
-          chdir: "/home/test"
 
     - name: Add docker-compose override to expose port 8000
       ansible.builtin.copy:
@@ -73,19 +71,17 @@
         line: '\1#condition: service_healthy'
         backrefs: yes
 
-    - name: Pull the latest NetBox Docker images
-      ansible.builtin.shell:
-        cmd: "sudo docker-compose pull"
-        args:
-          chdir: "/home/test/netbox-docker"
-        register: pull_output
+    - name: cd
+      shell:
+        cmd: "cd /home/test/netbox-docker"
 
-    - name: Bring up the NetBox Docker containers in detached mode
-      ansible.builtin.shell:
+    - name: Pull the latest NetBox Docker images
+      shell:
+        cmd: "sudo docker-compose pull"
+
+    - name: cd
+      shell:
         cmd: "sudo docker-compose up -d"
-        args:
-          chdir: "/home/test/netbox-docker"
-        register: up_output
 
     - name: Create NetBox superuser
       ansible.builtin.shell:
