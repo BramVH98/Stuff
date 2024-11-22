@@ -13,7 +13,7 @@
           - g++ 
           - docker.io
           - docker-compose
-	  - git
+          - git
         state: present
 
     - name: Clone NetBox Docker repository
