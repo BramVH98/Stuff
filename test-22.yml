@@ -69,7 +69,7 @@
 
     - name: Pull the latest NetBox Docker images
       shell:
-        cmd: "docker-compose pull"
+        cmd: "cd /home/test/netbox-docker && docker-compose pull"
 
     - name: Bring up the NetBox Docker containers in detached mode
       shell:
