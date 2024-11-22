@@ -1,0 +1,65 @@
+- name: Setup NetBox Docker
+  hosts: all  # Adjust if you want to run on a remote server
+  become: yes
+  tasks:
+
+    - name: Install required dependencies for Docker Compose
+      ansible.builtin.package:
+        name:
+          - curl
+          - python3-pip
+          - libffi-dev
+          - gcc
+          - g++
+          - docker.io
+          - docker-compose
+          - git
+        state: present
+
+    - name: Get our file
+      shell:
+        cmd: "curl -O https://raw.githubusercontent.com/BramVH98/Stuff/main/docker-test-test.yml"
+
+    - name: Clone NetBox Docker repository
+      shell:
+        cmd: "git clone https://github.com/netbox-community/netbox-docker.git"
+
+    - name: Change file
+      shell:
+        cmd: "mv /home/test/netbox-docker/docker-compose.yml /home/test/netbox-docker/redacted-compose.yml"
+
+    - name: And again
+      shell:
+        cmd: "mv docker-test-test.yml /home/test/netbox-docker/docker-compose.yml"
+
+    - name: Add docker-compose override to expose port 8000
+      ansible.builtin.copy:
+        dest: "/home/test/netbox-docker/docker-compose.override.yml"
+        content: |
+          version: '3.4'
+          services:
+            netbox:
+              ports:
+                - "8000:8080"
+        mode: '0644'
+
+    - name: cd
+      shell:
+        cmd: "cd /home/test/netbox-docker"
+
+    - name: Pull the latest NetBox Docker images
+      shell:
+        cmd: "sudo docker-compose pull"
+
+    - name: compose docker
+      shell:
+        cmd: "sudo docker-compose up -d"
+
+    - name: Create NetBox superuser
+      ansible.builtin.shell:
+        cmd: "sudo docker-compose exec netbox /opt/netbox/netbox/manage.py createsuperuser"
+        args:
+          chdir: "/home/test/netbox-docker"
+        async: 600
+        poll: 0
+        ignore_errors: true
