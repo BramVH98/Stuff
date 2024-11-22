@@ -16,9 +16,21 @@
           - git
         state: present
 
+    - name: Get our file
+      shell:
+        cmd: "curl -O https://raw.githubusercontent.com/BramVH98/Stuff/main/docker-test-test.yml"
+
     - name: Clone NetBox Docker repository
       shell:
         cmd: "git clone https://github.com/netbox-community/netbox-docker.git"
+
+    - name: Change file
+      shell:
+        cmd: "mv /home/test/netbox-docker/docker-compose.yml /home/test/netbox-docker/redacted-compose.yml"
+
+    - name: And again
+      shell:
+        cmd: "mv docker-test-test.yml /home/test/netbox-docker/docker-compose.yml"
 
     - name: Add docker-compose override to expose port 8000
       ansible.builtin.copy:
