@@ -13,12 +13,12 @@
           - g++ 
           - docker.io
           - docker-compose
-	        - git
+	  - git
         state: present
 
     - name: Clone NetBox Docker repository
       shell:
-	      cmd: "git clone https://github.com/netbox-community/netbox-docker.git"
+      cmd: "git clone https://github.com/netbox-community/netbox-docker.git"
 
     - name: Add docker-compose override to expose port 8000
       ansible.builtin.copy:
@@ -37,27 +37,27 @@
         line: "version: '3.4'"
         insertafter: BOF
 
-- name: Read the file content
-  command: cat docker-compose.yml
-  register: file_content
+    - name: Read the file content
+      command: cat docker-compose.yml
+      register: file_content
 
-- name: Process file content to skip first netbox:
-  set_fact:
-    processed_lines: |
+    - name: Process file content to skip first netbox:
+      set_fact:
+      processed_lines: |
       {{ file_content.stdout.split('\n') | map('trim') | list }}
-    netbox_indices: "{{ processed_lines | select('search', '^netbox:') | list }}"
-    skip_first_netbox: "{{ netbox_indices | split_at(1) }}"
-  debug:
-    skip_netbox: "{{ skip_first_netbox[0}}"
-  Change_file_ignore:
-      corrected:
-      is_altered:
+      netbox_indices: "{{ processed_lines | select('search', '^netbox:') | list }}"
+      skip_first_netbox: "{{ netbox_indices | split_at(1) }}"
+      debug:
+      skip_netbox: "{{ skip_first_netbox[0}}"
+      Change_file_ignore:
+        corrected:
+        is_altered:
 
-- name: Pull the latest NetBox Docker images
+    - name: Pull the latest NetBox Docker images
       shell:
         cmd: "docker-compose pull"
         chdir: "/home/test/netbox-docker"
-      register: pull_output
+        register: pull_output
 
     - name: Bring up the NetBox Docker containers in detached mode
       shell:
