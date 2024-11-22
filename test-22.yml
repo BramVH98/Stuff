@@ -37,21 +37,38 @@
         line: "version: '3.4'"
         insertafter: BOF
 
-    - name: Read the file content
-      command: cat docker-compose.yml
-      register: file_content
+    - name: Replace "netbox:" with "- netbox" only after depends_on
+  lineinfile:
+    path: docker-compose.yml
+    regexp: '^(\s*)depends_on:\s*$'
+    insertafter: '^(\s*)depends_on:\s*$'
+    line: '\1- netbox'
+    backrefs: yes
 
-    - name: Process file content to skip first netbox:
-      set_fact:
-      processed_lines: |
-      {{ file_content.stdout.split('\n') | map('trim') | list }}
-      netbox_indices: "{{ processed_lines | select('search', '^netbox:') | list }}"
-      skip_first_netbox: "{{ netbox_indices | split_at(1) }}"
-      debug:
-      skip_netbox: "{{ skip_first_netbox[0}}"
-      Change_file_ignore:
-        corrected:
-        is_altered:
+- name: Comment out "condition: service_healthy" only within depends_on
+  lineinfile:
+    path: docker-compose.yml
+    regexp: '^(\s*)condition: service_healthy\s*$'
+    insertafter: '^(\s*)depends_on:\s*$'
+    line: '\1#condition: service_healthy'
+    backrefs: yes
+
+- name: Replace "netbox:" with "- netbox" only after depends_on
+  lineinfile:
+    path: docker-compose.yml
+    regexp: '^(\s*)depends_on:\s*$'
+    insertafter: '^(\s*)depends_on:\s*$'
+    line: '\1- netbox'
+    backrefs: yes
+
+- name: Comment out "condition: service_healthy" only within depends_on
+  lineinfile:
+    path: docker-compose.yml
+    regexp: '^(\s*)condition: service_healthy\s*$'
+    insertafter: '^(\s*)depends_on:\s*$'
+    line: '\1#condition: service_healthy'
+    backrefs: yes
+
 
     - name: Pull the latest NetBox Docker images
       shell:
