@@ -68,21 +68,21 @@
         backrefs: yes
 
     - name: Pull the latest NetBox Docker images
-      ansible.builtin.shell:
+      shell:
         cmd: "docker-compose pull"
         args:
           chdir: "/home/test/netbox-docker"
         register: pull_output
 
     - name: Bring up the NetBox Docker containers in detached mode
-      ansible.builtin.shell:
+      shell:
         cmd: "docker-compose up -d"
         args:
           chdir: "/home/test/netbox-docker"
         register: up_output
 
     - name: Create NetBox superuser
-      ansible.builtin.shell:
+      shell:
         cmd: "docker-compose exec netbox /opt/netbox/netbox/manage.py createsuperuser"
         args:
           chdir: "/home/test/netbox-docker"
