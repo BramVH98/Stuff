@@ -67,9 +67,13 @@
         line: '\1#condition: service_healthy'
         backrefs: yes
 
+    - name: cd
+      shell:
+        cmd: "cd /home/test/netbox-docker"
+
     - name: Pull the latest NetBox Docker images
       shell:
-        cmd: "cd /home/test/netbox-docker && docker-compose pull"
+        cmd: "docker-compose pull"
 
     - name: Bring up the NetBox Docker containers in detached mode
       shell:
