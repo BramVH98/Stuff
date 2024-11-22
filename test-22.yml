@@ -37,13 +37,25 @@
         line: "version: '3.4'"
         insertafter: BOF
 
+    #- name: Replace "netbox" with "- netbox" only after depends_on
+      #ansible.builtin.lineinfile:
+      #  path: "/home/test/netbox-docker/docker-compose.yml"
+      #  regexp: '^(\s*)depends_on:\s*$'
+      #  insertafter: '^(\s*)depends_on:\s*$'
+      #  line: '\1- netbox'
+      #  backrefs: yes
+
     - name: Replace "netbox" with "- netbox" only after depends_on
       ansible.builtin.lineinfile:
-        path: "/home/test/netbox-docker/docker-compose.yml"
-        regexp: '^(\s*)depends_on:\s*$'
-        insertafter: '^(\s*)depends_on:\s*$'
-        line: '\1- netbox'
-        backrefs: yes
+    path: "/home/test/netbox-docker/docker-compose.yml"
+    regexp: '^(\s*)depends_on:\s*$'
+    insertafter: '^(\s*)depends_on:\s*$'
+    line: '\1- netbox'
+    backrefs: yes
+    create: no  # Ensures it doesn't create the file if it doesn't exist
+    state: present  # Ensures the line is added only if not present
+
+
 
     - name: Comment out "condition service_healthy" only within depends_on
       ansible.builtin.lineinfile:
@@ -52,13 +64,16 @@
         line: '\1#condition: service_healthy'
         backrefs: yes
 
-    - name: Replace "netbox" with "- netbox" only after depends_on
-      ansible.builtin.lineinfile:
-        path: "/home/test/netbox-docker/docker-compose.yml"
-        regexp: '^(\s*)depends_on:\s*$'
-        insertafter: '^(\s*)depends_on:\s*$'
-        line: '\1- netbox'
-        backrefs: yes
+   - name: Replace "netbox" with "- netbox" only after depends_on
+  ansible.builtin.lineinfile:
+    path: "/home/test/netbox-docker/docker-compose.yml"
+    regexp: '^(\s*)depends_on:\s*$'
+    insertafter: '^(\s*)depends_on:\s*$'
+    line: '\1- netbox'
+    backrefs: yes
+    create: no  # Ensures it doesn't create the file if it doesn't exist
+    state: present  # Ensures the line is added only if not present
+
 
     - name: Comment out "condition service_healthy" only within depends_on
       ansible.builtin.lineinfile:
