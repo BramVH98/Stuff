@@ -17,10 +17,8 @@
         state: present
 
     - name: Clone NetBox Docker repository
-      ansible.builtin.shell:
+      shell:
         cmd: "git clone https://github.com/netbox-community/netbox-docker.git"
-        args:
-          chdir: "/home/test"
 
     - name: Add docker-compose override to expose port 8000
       ansible.builtin.copy:
