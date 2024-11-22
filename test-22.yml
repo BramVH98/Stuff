@@ -70,22 +70,11 @@
     - name: Pull the latest NetBox Docker images
       shell:
         cmd: "docker-compose pull"
-        args:
-          chdir: "/home/test/netbox-docker"
-        register: pull_output
 
     - name: Bring up the NetBox Docker containers in detached mode
       shell:
         cmd: "docker-compose up -d"
-        args:
-          chdir: "/home/test/netbox-docker"
-        register: up_output
 
     - name: Create NetBox superuser
       shell:
         cmd: "docker-compose exec netbox /opt/netbox/netbox/manage.py createsuperuser"
-        args:
-          chdir: "/home/test/netbox-docker"
-        async: 600
-        poll: 0
-        ignore_errors: true
