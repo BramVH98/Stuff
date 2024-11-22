@@ -10,15 +10,17 @@
           - python3-pip
           - libffi-dev
           - gcc
-          - g++ 
+          - g++
           - docker.io
           - docker-compose
           - git
         state: present
 
     - name: Clone NetBox Docker repository
-      shell:
-      cmd: "git clone https://github.com/netbox-community/netbox-docker.git"
+      ansible.builtin.shell:
+        cmd: "git clone https://github.com/netbox-community/netbox-docker.git"
+        args:
+          chdir: "/home/test"
 
     - name: Add docker-compose override to expose port 8000
       ansible.builtin.copy:
@@ -32,60 +34,60 @@
         mode: '0644'
 
     - name: Add version to the top of docker-compose.yml
-      lineinfile:
-        path: docker-compose.yml
+      ansible.builtin.lineinfile:
+        path: "/home/test/netbox-docker/docker-compose.yml"
         line: "version: '3.4'"
         insertafter: BOF
 
-    - name: Replace "netbox:" with "- netbox" only after depends_on
-  lineinfile:
-    path: docker-compose.yml
-    regexp: '^(\s*)depends_on:\s*$'
-    insertafter: '^(\s*)depends_on:\s*$'
-    line: '\1- netbox'
-    backrefs: yes
+    - name: Replace "netbox" with "- netbox" only after depends_on
+      ansible.builtin.lineinfile:
+        path: "/home/test/netbox-docker/docker-compose.yml"
+        regexp: '^(\s*)depends_on:\s*$'
+        insertafter: '^(\s*)depends_on:\s*$'
+        line: '\1- netbox'
+        backrefs: yes
 
-- name: Comment out "condition: service_healthy" only within depends_on
-  lineinfile:
-    path: docker-compose.yml
-    regexp: '^(\s*)condition: service_healthy\s*$'
-    insertafter: '^(\s*)depends_on:\s*$'
-    line: '\1#condition: service_healthy'
-    backrefs: yes
+    - name: Comment out "condition service_healthy" only within depends_on
+      ansible.builtin.lineinfile:
+        path: "/home/test/netbox-docker/docker-compose.yml"
+        regexp: '^(\s*)condition: service_healthy\s*$'
+        line: '\1#condition: service_healthy'
+        backrefs: yes
 
-- name: Replace "netbox:" with "- netbox" only after depends_on
-  lineinfile:
-    path: docker-compose.yml
-    regexp: '^(\s*)depends_on:\s*$'
-    insertafter: '^(\s*)depends_on:\s*$'
-    line: '\1- netbox'
-    backrefs: yes
+    - name: Replace "netbox" with "- netbox" only after depends_on
+      ansible.builtin.lineinfile:
+        path: "/home/test/netbox-docker/docker-compose.yml"
+        regexp: '^(\s*)depends_on:\s*$'
+        insertafter: '^(\s*)depends_on:\s*$'
+        line: '\1- netbox'
+        backrefs: yes
 
-- name: Comment out "condition: service_healthy" only within depends_on
-  lineinfile:
-    path: docker-compose.yml
-    regexp: '^(\s*)condition: service_healthy\s*$'
-    insertafter: '^(\s*)depends_on:\s*$'
-    line: '\1#condition: service_healthy'
-    backrefs: yes
-
+    - name: Comment out "condition service_healthy" only within depends_on
+      ansible.builtin.lineinfile:
+        path: "/home/test/netbox-docker/docker-compose.yml"
+        regexp: '^(\s*)condition: service_healthy\s*$'
+        line: '\1#condition: service_healthy'
+        backrefs: yes
 
     - name: Pull the latest NetBox Docker images
-      shell:
+      ansible.builtin.shell:
         cmd: "docker-compose pull"
-        chdir: "/home/test/netbox-docker"
+        args:
+          chdir: "/home/test/netbox-docker"
         register: pull_output
 
     - name: Bring up the NetBox Docker containers in detached mode
-      shell:
+      ansible.builtin.shell:
         cmd: "docker-compose up -d"
-        chdir: "/home/test/netbox-docker"
-      register: up_output
+        args:
+          chdir: "/home/test/netbox-docker"
+        register: up_output
 
     - name: Create NetBox superuser
-      shell:
+      ansible.builtin.shell:
         cmd: "docker-compose exec netbox /opt/netbox/netbox/manage.py createsuperuser"
-        chdir: "/home/test/netbox-docker"
-      async: 600
-      poll: 0
-      ignore_errors: true
+        args:
+          chdir: "/home/test/netbox-docker"
+        async: 600
+        poll: 0
+        ignore_errors: true
