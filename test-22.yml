@@ -73,12 +73,12 @@
 
     - name: Pull the latest NetBox Docker images
       shell:
-        cmd: "docker-compose pull"
+        cmd: "sudo docker-compose pull"
 
     - name: Bring up the NetBox Docker containers in detached mode
       shell:
-        cmd: "docker-compose up -d"
+        cmd: "sudo docker-compose up -d"
 
     - name: Create NetBox superuser
       shell:
-        cmd: "docker-compose exec netbox /opt/netbox/netbox/manage.py createsuperuser"
+        cmd: "sudo docker-compose exec netbox /opt/netbox/netbox/manage.py createsuperuser"
